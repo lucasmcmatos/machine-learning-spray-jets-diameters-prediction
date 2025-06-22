@@ -1,0 +1,74 @@
+🧠 Objetivo do Script:
+Esse script tem como objetivo processar os dados brutos de simulações de jatos de combustível (armazenados como arquivos .csv) e gerar um dataset consolidado e limpo, com os seguintes campos:
+
+X [ m ] – Posição no eixo X (distância longitudinal do jato)
+
+Y [ m ] – Posição no eixo Y (deslocamento lateral)
+
+Z [ m ] – Posição no eixo Z (deslocamento vertical)
+
+Pressure [ atm ] – Pressão local
+
+Velocity [ m s^-1 ] – Velocidade local
+
+simulation – Identificador da simulação dentro de cada arquivo (um arquivo pode conter múltiplas simulações)
+
+D_in_mm – Diâmetro inicial do jato, extraído do nome do arquivo
+
+current_diameter – Diâmetro atual estimado a partir do espalhamento em Y e Z
+
+🧹 Etapas do Processamento:
+Leitura dos arquivos brutos:
+
+Todos os arquivos .csv da pasta data/raw/ são lidos.
+
+O nome do arquivo é utilizado para extrair o diâmetro inicial (d_in_mm). Ex: d3_2.csv → 3.2 mm.
+
+Identificação de simulações múltiplas:
+
+Cada arquivo pode conter múltiplas simulações, separadas por uma linha vazia, seguida de 5 linhas de cabeçalhos irrelevantes.
+
+Quando detectado esse padrão, o script pula as 5 linhas e incrementa o número da simulação.
+
+Limpeza e formatação:
+
+Dados "null" são preenchidos com o valor da linha anterior (técnica de forward fill).
+
+Os dados são convertidos de string para float, corrigindo separadores decimais (de vírgula para ponto, se necessário).
+
+Apenas linhas com o número correto de colunas são mantidas.
+
+Adição do campo D_in_mm:
+
+Esse campo indica o diâmetro inicial da simulação, e é constante para todas as linhas de um mesmo arquivo.
+
+📐 Cálculo do current_diameter:
+Para estimar o diâmetro atual ao longo do jato, é considerado o afastamento radial a partir da origem da simulação (ou seja, o quanto o jato se espalhou no espaço lateral e vertical em relação ao ponto inicial de cada simulação).
+
+🔢 Fórmula aplicada:
+Para cada linha da simulação, calcula-se:
+
+ini
+Copiar
+Editar
+D_atual = D_inicial + 2 * sqrt((Y - Y_0)^2 + (Z - Z_0)^2)
+Onde:
+
+D_inicial é o diâmetro inicial extraído do nome do arquivo.
+
+Y_0 e Z_0 são os valores de Y e Z da primeira linha da simulação.
+
+Y e Z são os valores atuais da linha sendo processada.
+
+O fator 2 representa a conversão do raio em diâmetro (deslocamento radial total).
+
+Esse cálculo é repetido para cada linha de cada simulação, gerando a coluna current_diameter.
+
+💾 Saída:
+O dataset consolidado é salvo em:
+
+bash
+Copiar
+Editar
+data/processed/dataset.csv
+Ele contém todos os campos limpos e normalizados, prontos para uso em modelos de regressão, análise exploratória ou visualizações.

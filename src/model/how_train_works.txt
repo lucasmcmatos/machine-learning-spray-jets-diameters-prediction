@@ -1,0 +1,71 @@
+# 🧠 Treinamento dos Modelos — Documentação
+
+Este arquivo descreve o funcionamento de cada script de treinamento localizado na pasta `src/model`, incluindo os modelos aplicados, etapas de execução e as métricas de avaliação utilizadas.
+
+---
+
+## 📁 Scripts de Treinamento
+
+### 1. `train_regressao_linear.py`
+Treina um modelo de **Regressão Linear Regularizada** com Gradiente Descendente implementado manualmente.
+
+**Principais etapas**:
+- Pré-processamento e separação dos dados.
+- Cálculo do custo regularizado.
+- Treinamento com gradiente descendente.
+- Geração de gráficos de:
+  - Distribuição do target (`01-...`)
+  - Correlação (`02-...`)
+  - Dispersão (`03-...`)
+  - Avaliação da taxa de aprendizado (`05-...`)
+- Salvamento do modelo em `.npz` com os coeficientes `w` e `b`.
+
+---
+
+### 2. `train_random_forest.py`
+Treina um modelo de **Random Forest Regressor** utilizando `scikit-learn`.
+
+**Principais etapas**:
+- Divisão treino/teste.
+- Treinamento com `RandomForestRegressor`.
+- Avaliação do modelo com métricas.
+- Geração de gráficos:
+  - Distribuição (`06-...`)
+  - Correlação (`07-...`)
+  - Comparação de predições (`08-...`)
+  - Importância das features (`09-...`)
+- Salvamento do modelo com `joblib`.
+
+---
+
+### 3. `train_xgboost.py`
+Treina um modelo de **XGBoost Regressor**.
+
+**Principais etapas**:
+- Divisão dos dados.
+- Treinamento com `XGBRegressor` (requere `xgboost` instalado).
+- Geração de gráficos:
+  - Distribuição (`10-...`)
+  - Correlação (`11-...`)
+- Avaliação com métricas.
+- Salvamento do modelo em `.json`.
+
+---
+
+## 📊 Métricas de Avaliação
+
+Todos os modelos são avaliados com base nas seguintes métricas:
+
+| Métrica | Descrição |
+|--------|-----------|
+| **MSE (Erro Quadrático Médio)** | Penaliza fortemente grandes erros. |
+| **RMSE (Raiz do Erro Quadrático Médio)** | Interpretação direta na unidade da variável. |
+| **MAE (Erro Absoluto Médio)** | Erro médio absoluto, menos sensível a outliers. |
+| **MAPE (Erro Percentual Absoluto Médio)** | Erro percentual médio, útil para interpretação prática. |
+| **R² (Coeficiente de Determinação)** | Indica a proporção da variância explicada pelo modelo (quanto mais próximo de 1, melhor). |
+
+---
+
+## 📁 Salvamento de Modelos
+
+Os modelos são salvos na pasta:

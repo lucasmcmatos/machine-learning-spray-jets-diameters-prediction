@@ -1,0 +1,4 @@
+# Ignorar os dados brutos e processados
+data/raw/
+data/processed/
+venv/
