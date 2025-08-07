@@ -86,8 +86,9 @@ make treinar-xgboost
 #### Predicao manual
 Permite ao usuário informar os parâmetros manualmente pelo terminal:
 ```bash
-make prever-manual
+make prever-manual modelo=NOME_DO_MODELO pressao=VALOR_PRESSAO_FLOAT velocidade=VALOR_VELOCIDADE_FLOAT diametro=VALOR_DIAMETRO_FLOAT time_step=VALOR_TIMESTEP_INT
 ```
+Opcoes de modelos: regressao_linear, random_forest ou xgboost
 
 #### Predicao em lote (via arquivo)
 Salve seu arquivo .csv com as colunas esperadas em data/prediction/inputs/. Depois execute:
