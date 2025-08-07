@@ -1,6 +1,6 @@
 # Predição do Diâmetro de Jatos de Combustível com Machine Learning
 
-Este projeto tem como objetivo prever o diâmetro de jatos de combustível em ambientes simulados, utilizando diferentes modelos de aprendizado de máquina. Ele processa dados experimentais provenientes de simulações computacionais para gerar insights sobre o comportamento do jato com base em variáveis como pressão, velocidade e diâmetro inicial.
+Este projeto tem como objetivo prever o diâmetro de jatos de combustível em ambientes simulados, utilizando diferentes modelos de aprendizado de máquina. Ele processa dados experimentais provenientes de simulações computacionais para gerar insights sobre o comportamento do jato com base em variáveis como pressão, velocidade, diâmetro inicial e tempo de simulação (time step).
 
 ---
 
@@ -8,20 +8,26 @@ Este projeto tem como objetivo prever o diâmetro de jatos de combustível em am
 
 ```
 ├── data/
-│   ├── raw/              # Dados brutos (arquivos .csv das simulações)
-│   └── processed/        # Dataset tratado e unificado
-├── models/               # Modelos treinados salvos
-├── reports/              # Relatórios e gráficos gerados
+│ ├── raw/ # Dados brutos (arquivos .csv das simulações)
+│ ├── processed/ # Dataset tratado e unificado
+│ └── prediction/
+│   ├── inputs/ # Arquivos de entrada para predição em lote
+│   └── outputs/ # Arquivos gerados com os resultados das predições
+├── models/ # Modelos treinados salvos
+├── reports/ # Relatórios e gráficos gerados
 ├── src/
-│   ├── data/
-│   │   └── make_dataset.py           # Geração do dataset final
-│   └── model/
-│       ├── train_regressao_linear.py
-│       ├── train_random_forest.py
-│       └── train_xgboost.py
-├── Makefile              # Comandos automatizados
-├── requirements.txt      # Dependências do projeto
-└── README.md             # Documentação principal
+│ ├── data/
+│ │ └── make_dataset.py # Geração do dataset final
+│ ├── model/
+│ │ ├── train_regressao_linear.py
+│ │ ├── train_random_forest.py
+│ │ └── train_xgboost.py
+│ └── predict/
+│ ├── predict_manual.py # Script para predição manual
+│ └── predict_batch.py # Script para predição via arquivo
+├── Makefile # Comandos automatizados
+├── requirements.txt # Dependências do projeto
+└── README.md # Documentação principal
 ```
 
 ---
@@ -75,12 +81,27 @@ make treinar-random-forest
 make treinar-xgboost
 ```
 
+### Realizar as predições:
+
+#### Predicao manual
+Permite ao usuário informar os parâmetros manualmente pelo terminal:
+```bash
+make prever-manual
+```
+
+#### Predicao em lote (via arquivo)
+Salve seu arquivo .csv com as colunas esperadas em data/prediction/inputs/. Depois execute:
+```bash
+make prever-lote ARQUIVO=nome_do_arquivo.csv MODELO=nome_do_modelo
+```
+A saída será gerada automaticamente em data/prediction/outputs/prediction_exemplo.csv.
 ---
 
 ## Resultados
 
 - Os gráficos e relatórios gerados durante o treinamento são salvos na pasta `reports/`.
 - Os modelos treinados são salvos em `models/` com os nomes apropriados para cada algoritmo.
+- As predições em lote são salvas em data/prediction/outputs/.
 
 ---
 
@@ -97,8 +118,9 @@ Cada modelo é avaliado utilizando as seguintes métricas:
 
 ## Observações
 
-- O script `make_dataset.py` calcula corretamente o diâmetro atual do jato com base na dispersão em Y e Z, garantindo que as predições sejam fisicamente significativas.
+- O script make_dataset.py calcula corretamente o diâmetro atual do jato com base na dispersão em Y e Z e agora também insere a coluna time_step, representando o instante da simulação.
 - O pipeline está organizado de forma modular para fácil manutenção, análise e futura extensão do projeto.
+- Os scripts de predição foram desenvolvidos para facilitar o uso prático dos modelos, permitindo prever tanto manualmente quanto por arquivos.
 
 ---
 
