@@ -1,4 +1,3 @@
-# machine-learning-prediction-spray-jets-diameters
 # Predição do Diâmetro de Jatos de Combustível com Machine Learning
 
 Este projeto tem como objetivo prever o diâmetro de jatos de combustível em ambientes simulados, utilizando diferentes modelos de aprendizado de máquina. Ele processa dados experimentais provenientes de simulações computacionais para gerar insights sobre o comportamento do jato com base em variáveis como pressão, velocidade e diâmetro inicial.
