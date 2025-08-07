@@ -69,6 +69,7 @@ for file_path in glob(os.path.join(RAW_DATA_DIR, "*.csv")):
 
         # Calcular diâmetro atual para cada linha, baseado na dispersão desde o início da simulação
         current_diameters = []
+        time_steps_all = [] # Adcionado no adaptação do timestep
 
         for sim_id, group in df.groupby("simulation"):
             y0 = group["Y [ m ]"].iloc[0]
@@ -76,9 +77,13 @@ for file_path in glob(os.path.join(RAW_DATA_DIR, "*.csv")):
             dy = group["Y [ m ]"] - y0
             dz = group["Z [ m ]"] - z0
             d_atual = d_in_mm + 2 * np.sqrt(dy**2 + dz**2)
+            time_steps = np.arange(len(group)) # Adcionado no adaptação do timestep 
+
             current_diameters.extend(d_atual.tolist())
+            time_steps_all.extend(time_steps.tolist()) # Adcionado no adaptação do timestep 
 
         df["current_diameter"] = current_diameters
+        df["time_step"] = time_steps_all
 
         all_data.append(df)
         print(f"✅ Processado: {file_name} (Amostras: {len(df)})")
