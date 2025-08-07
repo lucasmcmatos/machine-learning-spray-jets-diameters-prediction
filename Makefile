@@ -33,3 +33,19 @@ limpar:
 	@echo "Limpando relatórios e modelos salvos..."
 	rm -rf reports/*.png
 	rm -rf models/*
+
+# Predição manual com modelo treinado
+prever-manual:
+	@echo "Executando predição manual..."
+	python3 src/predict/predict_manual.py \
+		--modelo $(modelo) \
+		--pressao $(pressao) \
+		--velocidade $(velocidade) \
+		--diametro $(diametro) \
+		--time_step $(time_step)
+
+# Executa predição em lote a partir de um arquivo CSV
+# Exemplo: make prever-batch MODELO=xgboost ARQUIVO=exemplo.csv
+prever-batch:
+	@echo "Executando predição em lote com arquivo: $(ARQUIVO) usando modelo: $(MODELO)..."
+	python3 src/predict/predict_batch.py --modelo $(MODELO) --arquivo $(ARQUIVO)
