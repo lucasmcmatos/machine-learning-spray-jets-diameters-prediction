@@ -23,7 +23,7 @@ os.makedirs(MODEL_PATH, exist_ok=True)
 df = pd.read_csv(DATA_PATH)
 
 # Separação das features e do alvo
-features = ["Pressure [ atm ]", "Velocity [ m s^-1 ]", "D_in_mm"]
+features = ["Pressure [ atm ]", "Velocity [ m s^-1 ]", "D_in_mm", "time_step"]
 target = "current_diameter"
 X = df[features]
 y = df[target]
@@ -58,12 +58,17 @@ print("Mapa de correlação salvo em '07-rf-heatmap-correlacao.png'")
 print("\nTREINAMENTO DO MODELO RANDOM FOREST...")
 rf = RandomForestRegressor(n_estimators=100, random_state=42)
 rf.fit(X_train, y_train)
+print("Treinamento concluído com sucesso!")
 
 # ---------- Avaliação ----------
-print("REALIZANDO AVALIAÇÃO DO MODELO...")
+print("\nREALIZANDO AVALIAÇÃO DO MODELO...")
 
+print("\nAMOSTRAS DE PREDIÇÕES VS VALORES REAIS:")
 # Predições
 predictions = rf.predict(X_test)
+
+for i in range(10):  # mostra só as 10 primeiras por simplicidade
+    print(f"Amostra {i+1}: Predição = {predictions[i]:.4f}, Valor real = {y_test.iloc[i]:.4f}")
 
 # Métricas
 mse = mean_squared_error(y_test, predictions)
@@ -72,12 +77,15 @@ r2 = r2_score(y_test, predictions)
 mae = mean_absolute_error(y_test, predictions)
 mape = np.mean(np.abs((y_test - predictions) / y_test)) * 100
 
+print("\nANALISE DA CORRELACAO ENTRE TIME_STEP E O TARGET:")
+print(df[["time_step", "current_diameter"]].corr())
+
 print("\nMÉTRICAS DE AVALIAÇÃO:")
-print(f"MSE : {mse:.4f}")
-print(f"RMSE: {rmse:.4f}")
-print(f"R²  : {r2:.4f}")
-print(f"MAE : {mae:.4f}")
-print(f"MAPE: {mape:.4f}%")
+print(f"MSE : {mse:.8f}")
+print(f"RMSE: {rmse:.8f}")
+print(f"R²  : {r2:.8f}")
+print(f"MAE : {mae:.8f}")
+print(f"MAPE: {mape:.8f}%")
 
 # ---------- Gráfico 08: Comparação predição vs valor real ----------
 plt.figure(figsize=(10, 6))

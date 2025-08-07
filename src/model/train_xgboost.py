@@ -19,7 +19,7 @@ MODELS_PATH = os.path.join(ROOT_DIR, "models")
 df = pd.read_csv(DATA_PATH)
 
 # Definir features e target
-features = ["Pressure [ atm ]", "Velocity [ m s^-1 ]", "D_in_mm"]
+features = ["Pressure [ atm ]", "Velocity [ m s^-1 ]", "D_in_mm","time_step"]
 target = "current_diameter"
 X = np.array(df[features])
 y = np.array(df[target])
@@ -59,8 +59,8 @@ plt.close()
 print("Mapa de correlação salvo em '11-xgboost-heatmap-correlacao.png'")
 
 # Renomear colunas para o XGBoost
-X_train_df = pd.DataFrame(X_train, columns=["Pressure", "Velocity", "D_in"])
-X_test_df = pd.DataFrame(X_test, columns=["Pressure", "Velocity", "D_in"])
+X_train_df = pd.DataFrame(X_train, columns=["Pressure", "Velocity", "D_in", "time_step"])
+X_test_df = pd.DataFrame(X_test, columns=["Pressure", "Velocity", "D_in", "time_step"])
 
 # Treinar modelo
 print("\nTREINAMENTO DO MODELO XGBOOST...")
@@ -77,13 +77,18 @@ r2 = r2_score(y_test, predictions)
 mae = mean_absolute_error(y_test, predictions)
 mape = np.mean(np.abs((y_test - predictions) / y_test)) * 100
 
+print("\nAMOSTRAS DE PREDIÇÕES VS VALORES REAIS:")
+for i in range(10):
+    print(f"Amostra {i+1}: Predição = {predictions[i]:.4f}, Valor real = {y_test[i]:.4f}")
+
+
 # Resultados
 print("\nMÉTRICAS DE AVALIAÇÃO DO MODELO XGBOOST:")
-print(f"MSE : {mse:.4f}")
-print(f"RMSE: {rmse:.4f}")
-print(f"R²  : {r2:.4f}")
-print(f"MAE : {mae:.4f}")
-print(f"MAPE: {mape:.4f}%")
+print(f"MSE : {mse:.8f}")
+print(f"RMSE: {rmse:.8f}")
+print(f"R²  : {r2:.8f}")
+print(f"MAE : {mae:.8f}")
+print(f"MAPE: {mape:.8f}%")
 
 # Salvar modelo
 print("\nSALVANDO O MODELO XGBOOST...")

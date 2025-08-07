@@ -25,9 +25,9 @@ os.makedirs(MODEL_PATH, exist_ok=True)
 df = pd.read_csv(DATA_PATH)
 
 # Separação das features e do target para o projeto.
-features = ["Pressure [ atm ]", "Velocity [ m s^-1 ]", "D_in_mm"]
+features = ["Pressure [ atm ]", "Velocity [ m s^-1 ]", "D_in_mm", "time_step"]
 target = "current_diameter"
-all_data = df[["Pressure [ atm ]", "Velocity [ m s^-1 ]", "D_in_mm", "current_diameter"]]
+all_data = df[features + ["current_diameter"]]
 X = np.array(df[features])
 y = np.array(df[target])
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -92,7 +92,7 @@ print("Gráfico de dispersão salvo em '03-regressao-linear-dispersao-features.p
 # Inicializando os parâmetros da função de custo
 print("\nINICIALIZANDO OS PARAMETROS DA FUNÇÃO DE CUSTO:")
 b_init = 0.0
-w_init = np.array([0.0, 0.0, 0.0])
+w_init = np.zeros(len(features))
 print(f"w_init shape: {w_init.shape}, tipo: {type(w_init)}")
 print(f"b_init valor: {b_init}, tipo: {type(b_init)}")
 
