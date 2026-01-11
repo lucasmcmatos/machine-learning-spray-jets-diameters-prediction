@@ -1,0 +1,2 @@
+Ajustes feitos nos modelos de predição
+- Não usar o "train_test_split" por que ele separa as simulações aplicadas, assim, o certo é usar o "GroupShuffleSplit" que agrupa e depois splita.

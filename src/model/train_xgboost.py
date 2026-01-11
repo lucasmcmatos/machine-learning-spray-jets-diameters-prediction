@@ -5,9 +5,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from xgboost import XGBRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.model_selection import GroupShuffleSplit  # split por grupo (sem vazamento)
+from sklearn.multioutput import MultiOutputRegressor  # permite múltiplos alvos
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score  # métricas
+from xgboost import XGBRegressor  # modelo XGBoost
 
 # Caminho base do projeto
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -18,14 +19,56 @@ MODELS_PATH = os.path.join(ROOT_DIR, "models")
 # Carregar os dados
 df = pd.read_csv(DATA_PATH)
 
-# Definir features e target
-features = ["Pressure [ atm ]", "Velocity [ m s^-1 ]", "D_in_mm","time_step"]
-target = "current_diameter"
-X = np.array(df[features])
-y = np.array(df[target])
+# -------------------------------
+# Renomeando colunas para evitar erro no XGBoost
+# -------------------------------
+df = df.rename(columns={
+    "Pressure [ atm ]": "pressure_atm",      # renomeia pressão
+    "X [ m ]": "x_m",                         # renomeia coordenada X
+    "Y [ m ]": "y_m",                         # renomeia coordenada Y
+    "Velocity [ m s^-1 ]": "velocity_ms"     # renomeia velocidade (target)
+})
 
-# Dividir em treino e teste
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Definir features e targets
+features = [
+    "pressure_atm",
+    "D_in_mm",
+    "time_step",
+    "x_m",
+    "y_m"
+]
+
+targets = [
+    "current_diameter",
+    "velocity_ms"
+]
+
+
+#Criando a simulação por grupo
+df["group_id"] = (
+    df["simulation"].astype(str) + "_" +
+    df["D_in_mm"].astype(str)
+)
+X = df[features]
+y = df[targets]
+groups = df["group_id"]
+
+gss = GroupShuffleSplit(
+    n_splits=1,
+    test_size=0.2,
+    random_state=42
+)
+
+train_idx, test_idx = next(
+    gss.split(X, y, groups=groups)
+)
+
+X_train = X.iloc[train_idx]
+X_test  = X.iloc[test_idx]
+y_train = y.iloc[train_idx]
+y_test  = y.iloc[test_idx]
+
 print("\nINFORMAÇÕES DOS DADOS:")
 print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
 print(f"X_test: {X_test.shape}, y_test: {y_test.shape}")
@@ -35,7 +78,7 @@ os.makedirs(REPORTS_PATH, exist_ok=True)
 
 # Gráfico de distribuição
 plt.figure(figsize=(10, 6))
-sns.histplot(df[target], kde=True)
+sns.histplot(df[targets], kde=True)
 plt.title("Distribuição do Diâmetro Atual")
 plt.xlabel("Diâmetro Atual (mm)")
 plt.ylabel("Frequência")
@@ -44,9 +87,9 @@ plt.close()
 print("Gráfico de distribuição salvo em '10-xgboost-distribuicao-dataset.png'")
 
 # Heatmap de correlação
-corrmat = df[features + [target]].corr()
+corrmat = df[features + targets].corr()
 k = 4
-cols = corrmat.nlargest(k, target)[target].index
+cols = corrmat.nlargest(k, targets)[targets].index
 cm = np.corrcoef(df[cols].T)
 plt.figure(figsize=(8, 6))
 sns.set(font_scale=1)
@@ -58,40 +101,56 @@ plt.savefig(os.path.join(REPORTS_PATH, "11-xgboost-heatmap-correlacao.png"))
 plt.close()
 print("Mapa de correlação salvo em '11-xgboost-heatmap-correlacao.png'")
 
-# Renomear colunas para o XGBoost
-X_train_df = pd.DataFrame(X_train, columns=["Pressure", "Velocity", "D_in", "time_step"])
-X_test_df = pd.DataFrame(X_test, columns=["Pressure", "Velocity", "D_in", "time_step"])
-
 # Treinar modelo
-print("\nTREINAMENTO DO MODELO XGBOOST...")
-xgb = XGBRegressor(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42)
-xgb.fit(X_train_df, y_train)
+base_xgb = XGBRegressor(
+    n_estimators=400,
+    max_depth=4,
+    learning_rate=0.05,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    random_state=42,
+    n_jobs=-1
+)
 
-# Predições
-predictions = xgb.predict(X_test_df)
+model = MultiOutputRegressor(base_xgb)
 
-# Métricas
-mse = mean_squared_error(y_test, predictions)
-rmse = np.sqrt(mse)
-r2 = r2_score(y_test, predictions)
-mae = mean_absolute_error(y_test, predictions)
-mape = np.mean(np.abs((y_test - predictions) / y_test)) * 100
+print("\nTREINANDO XGBOOST (SEM VAZAMENTO)...")
+model.fit(X_train, y_train)
 
-print("\nAMOSTRAS DE PREDIÇÕES VS VALORES REAIS:")
-for i in range(10):
-    print(f"Amostra {i+1}: Predição = {predictions[i]:.4f}, Valor real = {y_test[i]:.4f}")
+pred = model.predict(X_test)
 
+pred_diam = pred[:, 0]  # predição do diâmetro
+pred_vel  = pred[:, 1]  # predição da velocidade
 
-# Resultados
-print("\nMÉTRICAS DE AVALIAÇÃO DO MODELO XGBOOST:")
-print(f"MSE : {mse:.8f}")
-print(f"RMSE: {rmse:.8f}")
-print(f"R²  : {r2:.8f}")
-print(f"MAE : {mae:.8f}")
-print(f"MAPE: {mape:.8f}%")
+y_test_diam = y_test["current_diameter"].values
+y_test_vel  = y_test["velocity_ms"].values
 
-# Salvar modelo
-print("\nSALVANDO O MODELO XGBOOST...")
+# Métricas - Diâmetro
+rmse_d = np.sqrt(mean_squared_error(y_test_diam, pred_diam))
+mae_d  = mean_absolute_error(y_test_diam, pred_diam)
+r2_d   = r2_score(y_test_diam, pred_diam)
+
+# Métricas - Velocidade
+rmse_v = np.sqrt(mean_squared_error(y_test_vel, pred_vel))
+mae_v  = mean_absolute_error(y_test_vel, pred_vel)
+r2_v   = r2_score(y_test_vel, pred_vel)
+
+print("\nRESULTADOS XGBOOST (GENERALIZAÇÃO REAL):")
+print(f"DIÂMETRO  -> RMSE: {rmse_d:.6f} | MAE: {mae_d:.6f} | R²: {r2_d:.6f}")
+print(f"VELOCIDADE-> RMSE: {rmse_v:.6f} | MAE: {mae_v:.6f} | R²: {r2_v:.6f}")
+
+import os
+MODELS_PATH = os.path.join(ROOT_DIR, "models")
 os.makedirs(MODELS_PATH, exist_ok=True)
-xgb.save_model(os.path.join(MODELS_PATH, "modelo_xgboost.json"))
-print("Modelo salvo com sucesso em '../../models/modelo_xgboost.json'")
+
+# Salva o booster do modelo de diâmetro
+model.estimators_[0].get_booster().save_model(
+    os.path.join(MODELS_PATH, "xgb_diameter_model.json")
+)  # salva o modelo XGBoost nativo para diâmetro
+
+# Salva o booster do modelo de velocidade
+model.estimators_[1].get_booster().save_model(
+    os.path.join(MODELS_PATH, "xgb_velocity_model.json")
+)  # salva o modelo XGBoost nativo para velocidade
+
+print("\nMODELOS XGBOOST SALVOS COM SUCESSO (DIÂMETRO E VELOCIDADE)")
