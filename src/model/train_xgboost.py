@@ -46,13 +46,11 @@ targets = [
 
 
 #Criando a simulação por grupo
-df["group_id"] = (
-    df["simulation"].astype(str) + "_" +
-    df["D_in_mm"].astype(str)
-)
+df["group_id"] = df["simulation_id"]
 X = df[features]
 y = df[targets]
 groups = df["group_id"]
+
 
 gss = GroupShuffleSplit(
     n_splits=1,

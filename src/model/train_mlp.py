@@ -2,8 +2,6 @@ import os
 import numpy as np
 import pandas as pd
 import joblib
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.multioutput import MultiOutputRegressor
@@ -43,14 +41,11 @@ targets = [
     "velocity_ms"
 ]
 
-df["group_id"] = (
-    df["simulation"].astype(str) + "_" +
-    df["D_in_mm"].astype(str)
-)
+groups = df["simulation_id"]
 
 X = df[features]
 y = df[targets]
-groups = df["group_id"]
+
 
 gss = GroupShuffleSplit(
     n_splits=1,
@@ -69,29 +64,29 @@ print("\nINFORMAÇÕES DOS DADOS:")
 print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
 print(f"X_test : {X_test.shape}, y_test : {y_test.shape}")
 
-mlp = MLPRegressor(
-    hidden_layer_sizes=(64, 64, 32),   # arquitetura
-    activation="relu",
-    solver="adam",
-    alpha=1e-4,                        # regularização L2
-    batch_size=256,
-    learning_rate_init=1e-3,
-    max_iter=500,
-    early_stopping=True,
-    random_state=42
-)
+# mlp = MLPRegressor(
+#     hidden_layer_sizes=(64, 64, 32),   # arquitetura
+#     activation="relu",
+#     solver="adam",
+#     alpha=1e-4,                        # regularização L2
+#     batch_size=256,
+#     learning_rate_init=1e-3,
+#     max_iter=500,
+#     early_stopping=True,
+#     random_state=42
+# )
 
 pipeline = Pipeline([
     ("scaler_X", StandardScaler()),    # normaliza entradas
-    ("mlp", mlp)
-])
+    ("mlp", MLPRegressor(hidden_layer_sizes=(128, 64), random_state=42, max_iter=2000))  # define a rede  #
+])  
 
-model = MultiOutputRegressor(pipeline)
+# model = MultiOutputRegressor(pipeline)
 
 print("\nTREINANDO MLP (SEM VAZAMENTO)...")
-model.fit(X_train, y_train)
+pipeline.fit(X_train, y_train)
 
-pred = model.predict(X_test)
+pred = pipeline.predict(X_test)
 
 pred_diam = pred[:, 0]
 pred_vel  = pred[:, 1]
@@ -111,9 +106,11 @@ print("\nRESULTADOS MLP (GENERALIZAÇÃO REAL):")
 print(f"DIÂMETRO  -> RMSE: {rmse_d:.6f} | MAE: {mae_d:.6f} | R²: {r2_d:.6f}")
 print(f"VELOCIDADE-> RMSE: {rmse_v:.6f} | MAE: {mae_v:.6f} | R²: {r2_v:.6f}")
 
-joblib.dump(
-    model,
-    os.path.join(MODEL_PATH, "mlp_multioutput.joblib")
-)
+joblib.dump(pipeline, "models/mlp_multioutput.joblib")
+
+# joblib.dump(
+#     model,
+#     os.path.join(MODEL_PATH, "mlp_multioutput.joblib")
+# )
 
 print("\nMODELO MLP SALVO COM SUCESSO!")

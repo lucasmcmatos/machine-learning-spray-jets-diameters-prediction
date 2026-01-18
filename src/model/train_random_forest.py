@@ -47,14 +47,11 @@ targets = [
     "velocity_ms"        # velocidade no timestep t
 ]
 
-df["group_id"] = (
-    df["simulation"].astype(str) + "_" +
-    df["D_in_mm"].astype(str)
-)
+groups = df["simulation_id"]
 
 X = df[features]
 y = df[targets]
-groups = df["group_id"]   # grupos para split correto
+groups = df["simulation_id"]  # grupos para split correto
 
 
 # Divisão treino/teste
